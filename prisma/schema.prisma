@@ -257,3 +257,20 @@ model ContentBlock {
   @@index([isActive, position])
 }
 
+/// Disposition de la page d'accueil : ordre d'affichage et visibilité de
+/// chaque section, administrable depuis /admin/contenu.
+///
+/// Séparé de ContentBlock : réordonner ou masquer une section ne doit pas
+/// dépendre du fait qu'elle ait du texte personnalisé. Tant qu'aucune ligne
+/// n'existe pour une section, c'est la disposition par défaut du code
+/// (HOME_SECTIONS dans lib/content.ts) qui s'applique.
+model HomeLayout {
+  /// Identifiant de la section (ex. « hero », « promo », « avis »).
+  key       String   @id
+  /// Rang d'affichage, croissant. 0 = premier.
+  position  Int      @default(0)
+  /// Section affichée sur la page d'accueil ?
+  isVisible Boolean  @default(true)
+  updatedAt  DateTime @updatedAt
+}
+

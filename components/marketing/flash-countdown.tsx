@@ -28,6 +28,7 @@ export function FlashCountdown() {
   return (
     <section
       aria-labelledby="flash-promo-titre"
+      data-testid="flash"
       className="border-y border-gold/30 bg-gradient-to-r from-ink via-ink to-indigo-dark text-ivory"
     >
       <div className="container-shop flex flex-col items-center gap-4 py-6 text-center sm:flex-row sm:justify-between sm:text-left">

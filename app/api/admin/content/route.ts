@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin-guard";
-import { contentBlockSchema } from "@/lib/validators/content";
-import { DEFAULT_CONTENT, isContentKey } from "@/lib/content";
+import { contentBlockSchema, layoutSchema } from "@/lib/validators/content";
+import { DEFAULT_CONTENT, getHomeLayout, isContentKey } from "@/lib/content";
 
 // app/api/admin/content/route.ts — lecture et mise à jour des blocs éditoriaux
 // de la page d'accueil. Réservées à l'administrateur.
@@ -41,7 +41,7 @@ export async function GET() {
     }),
   );
 
-  return NextResponse.json({ ok: true, blocks: merged });
+  return NextResponse.json({ ok: true, blocks: merged, layout: await getHomeLayout() });
 }
 
 /** POST : enregistre un bloc (upsert sur `key`). */
@@ -121,3 +121,41 @@ export async function DELETE(req: Request) {
 }
 
 export const dynamic = "force-dynamic";
+
+/** PUT : enregistre la disposition complète (ordre + visibilité). */
+export async function PUT(req: Request) {
+  const guard = await requireAdminApi();
+  if (!guard.ok) return guard.response;
+
+  try {
+    const body: unknown = await req.json();
+    const parsed = layoutSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { ok: false, error: parsed.error.errors[0]?.message ?? "Disposition invalide" },
+        { status: 400 },
+      );
+    }
+
+    // Upsert en une transaction : soit toute la disposition est enregistrée,
+    // soit rien ne change (pas de home à moitié réordonnée).
+    await prisma.$transaction(
+      parsed.data.sections.map((s) =>
+        prisma.homeLayout.upsert({
+          where: { key: s.key },
+          create: { key: s.key, position: s.position, isVisible: s.isVisible },
+          update: { position: s.position, isVisible: s.isVisible },
+        }),
+      ),
+    );
+
+    return NextResponse.json({ ok: true, count: parsed.data.sections.length });
+  } catch (e) {
+    console.error("[admin/content/layout]", e instanceof Error ? e.message : e);
+    return NextResponse.json(
+      { ok: false, error: "Enregistrement de la disposition impossible" },
+      { status: 500 },
+    );
+  }
+}

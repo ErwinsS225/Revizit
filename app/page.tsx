@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ArrowRight, MessageCircle, Sparkles, Truck, Undo2, Wallet } from "lucide-react";
 import { GlasswareSection } from "@/components/home/glassware-section";
 import { HeroCarousel } from "@/components/home/hero-carousel";
@@ -11,7 +12,7 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion/motion-tokens"
 import { buttonVariants } from "@/components/ui/button";
 import { BRAND, FREE_SHIPPING_THRESHOLD, SEO_DESCRIPTION } from "@/lib/brand";
 import { parseJsonStringArray } from "@/lib/cart-pricing";
-import { getContent } from "@/lib/content";
+import { getContent, getHomeLayout, type HomeSection } from "@/lib/content";
 import { prisma } from "@/lib/prisma";
 import { buildMetadata } from "@/lib/seo";
 import { formatPrice } from "@/lib/utils";
@@ -44,7 +45,7 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function HomePage() {
-  const [categories, featured, content] = await Promise.all([
+  const [categories, featured, content, layout] = await Promise.all([
     prisma.category.findMany({
       where: { parentId: null },
       orderBy: { name: "asc" },
@@ -57,6 +58,7 @@ export default async function HomePage() {
       select: { id: true, name: true, slug: true, price: true, images: true, gender: true },
     }),
     getContent(),
+    getHomeLayout(),
   ]);
 
   // Les blocs publiés (isActive) sont pris en compte ; les autres gardent
@@ -69,8 +71,12 @@ export default async function HomePage() {
   const verrerie = content.verrerie;
   const selection = content.selection;
 
-  return (
-    <div>
+  // Chaque section est rendue par une fonction sans effet de bord. L'ordre
+  // d'appel de la table ci-dessous définit l'ordre d'affichage ; c'est
+  // l'admin qui choisit cet ordre (getHomeLayout). Une section masquée est
+  // simplement absente de la liste.
+  const sections: Partial<Record<HomeSection, ReactNode>> = {
+    hero: (
       <HeroCarousel
         slides={hero.map((b) => ({
           eyebrow: b.eyebrow ?? "",
@@ -82,9 +88,9 @@ export default async function HomePage() {
           imageAlt: b.imageAlt ?? b.title,
         }))}
       />
-      <FlashCountdown />
-
-      {/* Catégories */}
+    ),
+    promo: <FlashCountdown />,
+    univers: (
       <section aria-labelledby="categories-titre" className="container-shop py-14">
         <Reveal>
           <div className="flex items-end justify-between">
@@ -131,11 +137,10 @@ export default async function HomePage() {
           ))}
         </Stagger>
       </section>
+    ),
+    verrerie: <GlasswareSection content={verrerie} />,
 
-      {/* Section signature : atelier verrerie personnalisée */}
-      <GlasswareSection content={verrerie} />
-
-      {/* Produits vedettes */}
+    selection: (
       <section aria-labelledby="vedettes-titre" className="bg-muted/40 py-14">
         <div className="container-shop">
           <Reveal>
@@ -179,8 +184,8 @@ export default async function HomePage() {
           </Stagger>
         </div>
       </section>
-
-      {/* Réassurance CI */}
+    ),
+    reassurance: (
       <section className="container-shop py-14">
         <Stagger className="grid gap-4 sm:grid-cols-3">
           {TRUST_POINTS.map(({ icon: Icon, title, text }) => (
@@ -212,14 +217,25 @@ export default async function HomePage() {
           </div>
         </Reveal>
       </section>
-
+    ),
+    avis: (
       <Reveal>
         <Testimonials />
       </Reveal>
+    ),
+    newsletter: (
       <Reveal>
         <NewsletterSection />
       </Reveal>
-    </div>
-  );
+    ),
+  };
+
+  // Le rendu suit l'ordre choisi par l'admin : une section masquée est omise.
+  const ordered = layout
+    .filter((row) => row.isVisible)
+    .map((row) => sections[row.key])
+    .filter((node): node is ReactNode => node !== undefined);
+
+  return <div>{ordered}</div>;
 }
 

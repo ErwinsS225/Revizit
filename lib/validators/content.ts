@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CONTENT_KEYS } from "@/lib/content";
+import { CONTENT_KEYS, HOME_SECTIONS } from "@/lib/content";
 
 // lib/validators/content.ts — validation des blocs éditoriaux (admin).
 const keyEnum = z.enum(CONTENT_KEYS, {
@@ -40,3 +40,31 @@ export const contentBlockSchema = z.object({
 });
 
 export type ContentBlockInput = z.infer<typeof contentBlockSchema>;
+
+/** Élément de disposition : une section, son rang, sa visibilité. */
+export const layoutItemSchema = z.object({
+  key: z.enum(HOME_SECTIONS, { errorMap: () => ({ message: "Section inconnue" }) }),
+  position: z.number().int().min(0).max(100),
+  isVisible: z.boolean(),
+});
+
+/**
+ * Réordonnancement complet de la home : l'admin envoie toutes les sections
+ * d'un coup. On refuse le partiel pour éviter un état incohérent où une
+ * section disparaît de la page sans qu'on l'ait voulu.
+ */
+export const layoutSchema = z
+  .object({ sections: z.array(layoutItemSchema).min(1) })
+  .superRefine((data, ctx) => {
+    const seen = new Set<string>();
+    for (const item of data.sections) {
+      if (seen.has(item.key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["sections"],
+          message: `Section en double : ${item.key}`,
+        });
+      }
+      seen.add(item.key);
+    }
+  });

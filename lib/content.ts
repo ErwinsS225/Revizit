@@ -161,3 +161,76 @@ export async function getContent(): Promise<Record<ContentKey, ContentBlockData>
 export function isContentKey(value: string): value is ContentKey {
   return (CONTENT_KEYS as readonly string[]).includes(value);
 }
+
+// ── Disposition de la page d'accueil ───────────────────────────────────────
+
+/** Sections de la home, dans l'ordre actuel par défaut. */
+export const HOME_SECTIONS = [
+  "hero",
+  "promo",
+  "univers",
+  "verrerie",
+  "selection",
+  "reassurance",
+  "avis",
+  "newsletter",
+] as const;
+
+export type HomeSection = (typeof HOME_SECTIONS)[number];
+
+/** Libellés affichés dans l'admin. */
+export const HOME_SECTION_LABELS: Record<HomeSection, string> = {
+  hero: "Hero (carrousel)",
+  promo: "Promo flash (compte à rebours)",
+  univers: "Nos univers",
+  verrerie: "Atelier verrerie",
+  selection: "Sélection du moment",
+  reassurance: "Réassurance (livraison, paiement, retours)",
+  avis: "Avis clients",
+  newsletter: "Newsletter",
+};
+
+/** Sections qui n'ont pas (encore) de bloc éditorial : seul le layout les pilote. */
+export const SECTIONS_WITHOUT_BLOCK: readonly HomeSection[] = [
+  "promo",
+  "reassurance",
+  "avis",
+  "newsletter",
+];
+
+export function isHomeSection(value: string): value is HomeSection {
+  return (HOME_SECTIONS as readonly string[]).includes(value);
+}
+
+export interface HomeLayoutRow {
+  key: HomeSection;
+  position: number;
+  isVisible: boolean;
+}
+
+/**
+ * Charge la disposition enregistrée, ou la disposition par défaut.
+ * Toute section inconnue en base est ignorée.
+ */
+export async function getHomeLayout(): Promise<HomeLayoutRow[]> {
+  const fallback: HomeLayoutRow[] = HOME_SECTIONS.map((key, position) => ({
+    key,
+    position,
+    isVisible: true,
+  }));
+
+  try {
+    const rows = await prisma.homeLayout.findMany({ orderBy: { position: "asc" } });
+    if (rows.length === 0) return fallback;
+
+    const known = rows.filter((r): r is typeof r & { key: HomeSection } => isHomeSection(r.key));
+    if (known.length === 0) return fallback;
+
+    return known
+      .map((r) => ({ key: r.key, position: r.position, isVisible: r.isVisible }))
+      .sort((a, b) => a.position - b.position);
+  } catch (e) {
+    console.error("[content] disposition illisible, repli sur l'ordre par défaut :", e);
+    return fallback;
+  }
+}

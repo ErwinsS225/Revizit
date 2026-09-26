@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_CONTENT } from "@/lib/content";
+import {
+  DEFAULT_CONTENT,
+  HOME_SECTIONS,
+  HOME_SECTION_LABELS,
+  getHomeLayout,
+} from "@/lib/content";
 import { ContentEditor, type BlockDraft } from "@/components/admin/content-editor";
+import { LayoutEditor, type LayoutItem } from "@/components/admin/layout-editor";
 
 export const metadata: Metadata = { title: "Contenu du site" };
 export const dynamic = "force-dynamic";
@@ -80,9 +86,26 @@ function toDraft(key: string, row?: StoredRow): BlockDraft {
   };
 }
 
-// app/(admin)/admin/contenu/page.tsx — édition des textes et images de la home.
+// app/(admin)/admin/contenu/page.tsx — édition des textes/images et de la
+// disposition (ordre + visibilité) de la page d'accueil.
 export default async function ContentAdminPage() {
-  const rows = (await prisma.contentBlock.findMany()) as StoredRow[];
+  const [rows, layout] = await Promise.all([
+    prisma.contentBlock.findMany() as Promise<StoredRow[]>,
+    getHomeLayout(),
+  ]);
+
+  // Les sections sans bloc éditorial (promo, réassurance, avis, newsletter)
+  // sont listées dans l'ordre mais n'ont pas de formulaire de texte.
+  const layoutItems: LayoutItem[] = HOME_SECTIONS.map((key) => {
+    const row = layout.find((l) => l.key === key);
+    return {
+      key,
+      label: HOME_SECTION_LABELS[key],
+      position: row?.position ?? 0,
+      isVisible: row?.isVisible ?? true,
+      hasBlock: !["promo", "reassurance", "avis", "newsletter"].includes(key),
+    };
+  }).sort((a, b) => a.position - b.position);
 
   return (
     <div>
@@ -103,6 +126,10 @@ export default async function ContentAdminPage() {
       </header>
 
       <div className="grid gap-5 lg:grid-cols-2">
+        <div className="lg:col-span-2">
+          <LayoutEditor initial={layoutItems} />
+        </div>
+
         {SECTIONS.map((section) => (
           <ContentEditor
             key={section.key}
