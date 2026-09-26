@@ -6,8 +6,11 @@ out/
 # prisma
 prisma/dev.db*
 # env
-.env*.local
+# ⚠️ Ne JAMAIS ignorer .env.example : c'est le gabarit des variables, sans secret.
+# Il est indispensable à qui clone le projet (et à Vercel) de savoir quelles variables existent.
 .env
+.env*.local
+!.env.example
 # uploads
 public/uploads/*
 !public/uploads/.gitkeep
