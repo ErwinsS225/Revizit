@@ -126,20 +126,6 @@ export function LoginForm() {
             </>
           )}
         </Button>
-
-        <div className="mt-6 rounded-lg bg-muted/50 p-3.5 text-xs text-muted-foreground">
-          <p className="font-semibold text-foreground">Comptes de test (seed) :</p>
-          <ul className="mt-1 space-y-0.5">
-            <li>
-              Client : <code className="text-foreground">marie@example.com</code> /{" "}
-              <code className="text-foreground">Client123!</code>
-            </li>
-            <li>
-              Admin : <code className="text-foreground">admin@shop.com</code> /{" "}
-              <code className="text-foreground">Admin123!</code>
-            </li>
-          </ul>
-        </div>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">

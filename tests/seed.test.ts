@@ -28,19 +28,19 @@ describeDb("seed (intégration Postgres)", () => {
     expect(prisma, "TEST_DATABASE_URL ou DATABASE_URL requis").not.toBeNull();
   }, TIMEOUT_MS);
 
-  it("contient 3 utilisateurs (1 admin + 2 clients)", async () => {
-    const [admins, customers] = await Promise.all([
-      prisma!.user.count({ where: { role: "ADMIN" } }),
-      prisma!.user.count({ where: { role: "CUSTOMER" } }),
-    ]);
-    expect(admins).toBe(1);
-    expect(customers).toBe(2);
+  it("ne crée AUCUN utilisateur de démonstration", async () => {
+    // Les comptes de test (admin@shop.com / Admin123!) ont été supprimés :
+    // ils donnaient un accès total au back-office. Les utilisateurs réels
+    // s'inscrivent via /register.
+    expect(await prisma!.user.count()).toBe(0);
   }, TIMEOUT_MS);
 
-  it("admin@shop.com existe avec un hash bcrypt", async () => {
-    const admin = await prisma!.user.findUnique({ where: { email: "admin@shop.com" } });
-    expect(admin?.role).toBe("ADMIN");
-    expect(admin?.passwordHash?.startsWith("$2")).toBe(true);
+  it("aucun email de démonstration résiduel en base", async () => {
+    const leak = await prisma!.user.findMany({
+      where: { email: { in: ["admin@shop.com", "marie@example.com", "karim@example.com"] } },
+      select: { email: true },
+    });
+    expect(leak).toEqual([]);
   }, TIMEOUT_MS);
 
   it("contient 6 catégories dont 3 avec parent", async () => {
@@ -83,13 +83,9 @@ describeDb("seed (intégration Postgres)", () => {
     }
   }, TIMEOUT_MS);
 
-  it("contient 5 commandes avec items et total cohérent", async () => {
-    const orders = await prisma!.order.findMany({ include: { items: true } });
-    expect(orders.length).toBe(5);
-    for (const o of orders) {
-      expect(o.items.length).toBeGreaterThan(0);
-      const sum = o.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-      expect(o.total).toBe(sum);
-    }
+  it("ne crée aucune commande de démonstration", async () => {
+    // Les commandes fictives étaient rattachées aux clients de test supprimés.
+    // Une boutique qui vient d'ouvrir démarre avec 0 commande.
+    expect(await prisma!.order.count()).toBe(0);
   }, TIMEOUT_MS);
 });

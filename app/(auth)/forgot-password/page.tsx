@@ -1,33 +1,31 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft, Mail } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Mot de passe oublié",
-  description: "Réinitialisation de mot de passe.",
-};
+  description:
+    "Réinitialisez le mot de passe de votre compte Revizit en recevant un lien sécurisé par email.",
+  path: "/forgot-password",
+  noIndex: true,
+});
 
-// app/(auth)/forgot-password/page.tsx — information réinitialisation mot de passe.
+// app/(auth)/forgot-password/page.tsx — demande de réinitialisation du mot de passe.
 export default function ForgotPasswordPage() {
   return (
-    <div className="container-shop max-w-md py-12 sm:py-16 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-terracotta/10 text-terracotta">
-        <Mail className="h-6 w-6" />
+    <div className="container-shop py-12 sm:py-16">
+      <div className="mx-auto max-w-md text-center">
+        <h1 className="font-serif text-3xl font-bold tracking-tight sm:text-4xl">
+          Mot de passe oublié
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+          Indiquez l&apos;email de votre commande : nous vous enverrons un lien pour choisir un
+          nouveau mot de passe.
+        </p>
       </div>
-      <h1 className="mt-4 font-serif text-3xl font-bold tracking-tight">Mot de passe oublié</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Pour des raisons de sécurité, veuillez contacter le support de la boutique ou vous reconnecter avec vos identifiants existants.
-      </p>
 
-      <div className="mt-8 flex flex-col gap-3">
-        <Link
-          href="/login"
-          className={cn(buttonVariants({ variant: "terracotta" }), "h-11 w-full font-semibold")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la connexion
-        </Link>
+      <div className="mt-8">
+        <ForgotPasswordForm />
       </div>
     </div>
   );
