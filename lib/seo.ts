@@ -20,7 +20,10 @@ export function organizationJsonLd(): Record<string, unknown> {
       addressCountry: BRAND.countryCode,
     },
     areaServed: ["CI", "SN", "BF", "ML", "FR"],
-    sameAs: [`https://wa.me/2250700000000`],
+    // Doit être dérivé de BRAND.whatsappUrl : une valeur écrite en dur ici
+    // créait deux numéros de téléphone différents sur le site (incohérence
+    // visible par Google et pénalisant le SEO local).
+    sameAs: [BRAND.whatsappUrl, BRAND.social.instagram, BRAND.social.facebook, BRAND.social.tiktok],
   };
 }
 

@@ -29,7 +29,7 @@ export function Footer() {
               <MessageCircle className="h-5 w-5" aria-hidden="true" />
             </a>
             <a
-              href="https://instagram.com/revizit"
+              href={BRAND.social.instagram}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Revizit sur Instagram"
@@ -38,7 +38,7 @@ export function Footer() {
               <Instagram className="h-5 w-5" aria-hidden="true" />
             </a>
             <a
-              href="https://tiktok.com/@revizit"
+              href={BRAND.social.tiktok}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Revizit sur TikTok"

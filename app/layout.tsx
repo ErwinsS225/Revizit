@@ -1,4 +1,3 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter, Playfair_Display, Space_Grotesk } from "next/font/google";
@@ -104,28 +103,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="font-sans">
-        <ClerkProvider>
-          <ThemeProvider>
-            <SessionProvider>
-              <MotionProvider>
-                <StoreHydration />
-                <a
-                  href="#contenu"
-                  className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
-                >
-                  Aller au contenu
-                </a>
-                <Navbar />
-                <main id="contenu" className="min-h-[60vh]">
-                  <PageTransition>{children}</PageTransition>
-                </main>
-                <Footer />
-                <WelcomePopup />
-                <Toaster richColors position="top-center" closeButton />
-              </MotionProvider>
-            </SessionProvider>
-          </ThemeProvider>
-        </ClerkProvider>
+        <ThemeProvider>
+          <SessionProvider>
+            <MotionProvider>
+              <StoreHydration />
+              <a
+                href="#contenu"
+                className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+              >
+                Aller au contenu
+              </a>
+              <Navbar />
+              <main id="contenu" className="min-h-[60vh]">
+                <PageTransition>{children}</PageTransition>
+              </main>
+              <Footer />
+              <WelcomePopup />
+              <Toaster richColors position="top-center" closeButton />
+            </MotionProvider>
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

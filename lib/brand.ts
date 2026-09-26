@@ -13,9 +13,15 @@ export const BRAND = {
   country: "Côte d'Ivoire",
   countryCode: "CI",
   locale: "fr_CI",
-  /** WhatsApp SAV (section 17) — numéro de démonstration. */
+  /** WhatsApp SAV (section 17) — À REMPLACER par votre vrai numéro. */
   whatsapp: "+2250585231985",
   whatsappUrl: "https://wa.me/2250585231985",
+  /** Réseaux sociaux — à remplacer par vos vrais comptes (utilisés dans le JSON-LD). */
+  social: {
+    instagram: "https://instagram.com/revizit",
+    facebook: "https://facebook.com/revizit",
+    tiktok: "https://tiktok.com/@revizit",
+  },
 } as const;
 
 export const SEO_DESCRIPTION =

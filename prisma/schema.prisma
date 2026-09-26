@@ -1,13 +1,20 @@
-// prisma/schema.prisma — SQLite local (dev), migrable vers PostgreSQL en prod.
-// NOTE SQLite : pas d'enum natif → Role/Gender/OrderStatus stockés en String
-// (constantes dans types/*.ts + validation zod). En prod Postgres : repasser en enum.
+// prisma/schema.prisma — PostgreSQL (Supabase) : dev et production partagent la même base.
+// Le fichier SQLite local (prisma/dev.db) n'est plus utilisé : il est éphémère et
+// perd ses données à chaque redéploiement sur Vercel.
+//
+// NOTE : Role / Gender / OrderStatus restent stockés en String (et non en enum) pour
+// ne pas casser les types existants (types/*.ts) ni la validation zod. Functionnel
+// sous Postgres, et plus simple à faire évoluer.
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Connexion directe : reserved aux migrations (prisma migrate).
+  // Utile car le pooler transactionnel de Supabase ne gère pas les DDL.
+  directUrl = env("DIRECT_URL")
 }
 
 model User {

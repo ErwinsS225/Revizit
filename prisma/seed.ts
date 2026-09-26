@@ -1,5 +1,8 @@
-// prisma/seed.ts — jeu de données dev Revizit : 1 admin, 2 clients, 6 catégories, 30 produits, 5 commandes.
-// Usage : npm run prisma:seed (ou npx prisma db seed). Relançable (purge avant insertion).
+// prisma/seed.ts — jeu de données Revizit : 6 catégories, 30 produits, variantes.
+// En dev : + 1 admin, 2 clients, adresses, 5 commandes, avis (données de démo).
+// ⚠️ DESTRUCTIF : le seed purge la base avant insertion. En production il est
+//    refusé (voir purge()) et ne doit tourner que sur une base jetable.
+// Usage : npm run prisma:seed (ou npx prisma db seed).
 import { PrismaClient } from "@prisma/client";
 import type { OrderStatus } from "../types";
 import { hashPassword } from "../lib/password";
@@ -17,6 +20,14 @@ const CATEGORIES: { name: string; slug: string; description: string; image: stri
   { name: "Robes", slug: "robes", description: "Robes longues, ensembles de dot et pièces de cérémonie.", image: U("photo-1708170236080-6cb6d2d5497c"), parent: "femmes" },
   { name: "Ensembles", slug: "ensembles", description: "Ensembles deux pièces et tailleurs complets.", image: U("photo-1708170236083-4671c6b83ad3"), parent: "femmes" },
 ];
+
+/**
+ * Comptes de démonstration. En production ils ne doivent JAMAIS exister :
+ * `admin@shop.com` / `Admin123!` donnerait un accès total au back-office.
+ * On les saute sauf opt-in explicite.
+ */
+const SEED_DEMO_USERS =
+  process.env.SEED_DEMO_USERS === "true" || process.env.NODE_ENV !== "production";
 
 const USERS: { name: string; email: string; password: string; role: "ADMIN" | "CUSTOMER" }[] = [
   { name: "Admin Boutique", email: "admin@shop.com", password: "Admin123!", role: "ADMIN" },
@@ -81,8 +92,20 @@ function isGlasswareRow(tag: string): boolean {
   return tag === "verre";
 }
 
-/** Purge dans l'ordre des dépendances (SQLite FK). */
+/**
+ * Purge dans l'ordre des dépendances (clés étrangères).
+ *
+ * ⚠️ DESTRUCTIF : supprime TOUT, y compris les vraies commandes et les vrais clients.
+ * En production c'est interdit — on refuse de lancer la purge, car un seed
+ * exécuté par erreur sur la base de prod effacerait l'historique de la boutique.
+ */
 async function purge(): Promise<void> {
+  if (process.env.NODE_ENV === "production" && process.env.SEED_DEMO_USERS !== "true") {
+    throw new Error(
+      "Refus de purger : NODE_ENV=production. Le seed est destructif (commandes, " +
+        "clients, produits). Relancez avec SEED_DEMO_USERS=true uniquement sur une base jetable.",
+    );
+  }
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.cartItem.deleteMany();
@@ -104,17 +127,18 @@ async function main(): Promise<void> {
 
   console.log("👤 Seed : utilisateurs…");
   const createdUsers = [];
-  for (const u of USERS) {
+  for (const u of SEED_DEMO_USERS ? USERS : []) {
     createdUsers.push(
       await prisma.user.create({
         data: { name: u.name, email: u.email, passwordHash: await hashPassword(u.password), role: u.role },
       }),
     );
   }
-  const admin = createdUsers[0];
-  const marie = createdUsers[1];
-  const karim = createdUsers[2];
-  if (!admin || !marie || !karim) throw new Error("Échec création utilisateurs");
+  // Les commandes de démonstration référencent ces clients : sans eux, on saute
+  // la section « commandes » plutôt que de planter.
+  const [admin, marie, karim] = createdUsers;
+  const hasDemoUsers = Boolean(admin && marie && karim);
+  if (SEED_DEMO_USERS && !hasDemoUsers) throw new Error("Échec création utilisateurs");
 
   console.log("🗂️ Seed : catégories…");
   const catBySlug = new Map<string, string>();
@@ -163,6 +187,21 @@ async function main(): Promise<void> {
       },
     });
     createdProducts.push({ id: product.id, price: product.price });
+  }
+
+  // Adresses, commandes et avis sont des données de démonstration rattachées aux
+  // clients de démo. En production (pas de SEED_DEMO_USERS) on ne crée que le
+  // catalogue : ni comptes factices, ni commandes fictives dans le back-office.
+  if (!hasDemoUsers || !admin || !marie || !karim) {
+    const counts = {
+      users: await prisma.user.count(),
+      categories: await prisma.category.count(),
+      products: await prisma.product.count(),
+      variants: await prisma.productVariant.count(),
+      orders: await prisma.order.count(),
+    };
+    console.log("✅ Seed terminé (catalogue seul) :", counts);
+    return;
   }
 
   console.log("🏠 Seed : adresses…");

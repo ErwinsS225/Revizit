@@ -1,39 +1,49 @@
 import { describe, expect, it } from "vitest";
 import { PrismaClient } from "@prisma/client";
 
-// Test d'intégration DB (SQLite dev.db seedée) : vérifie le contenu du seed.
-// Utilise une DB de test séparée via DATABASE_URL si définie, sinon dev.db en lecture seule.
-const dbUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL ?? "file:./dev.db";
-const prisma = new PrismaClient({ datasources: { db: { url: dbUrl } } });
+// Test d'intégration DB : vérifie le contenu du seed sur une base RÉELLE.
+// ⚠️ Nécessite une base Postgres accessible (Supabase en dev/prod, ou locale) :
+//    TEST_DATABASE_URL ou DATABASE_URL doit pointer vers une base seedée.
+//    Sans cela le test est ignoré (et non Vert trompeur).
+const dbUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
+const prisma = dbUrl
+  ? new PrismaClient({ datasources: { db: { url: dbUrl } } })
+  : null;
 
-describe("seed (intégration SQLite)", () => {
+const describeDb = prisma ? describe : describe.skip;
+
+describeDb("seed (intégration Postgres)", () => {
+  it("la base de test est configurée", () => {
+    expect(prisma, "TEST_DATABASE_URL ou DATABASE_URL requis").not.toBeNull();
+  });
+
   it("contient 3 utilisateurs (1 admin + 2 clients)", async () => {
     const [admins, customers] = await Promise.all([
-      prisma.user.count({ where: { role: "ADMIN" } }),
-      prisma.user.count({ where: { role: "CUSTOMER" } }),
+      prisma!.user.count({ where: { role: "ADMIN" } }),
+      prisma!.user.count({ where: { role: "CUSTOMER" } }),
     ]);
     expect(admins).toBe(1);
     expect(customers).toBe(2);
   });
 
   it("admin@shop.com existe avec un hash bcrypt", async () => {
-    const admin = await prisma.user.findUnique({ where: { email: "admin@shop.com" } });
+    const admin = await prisma!.user.findUnique({ where: { email: "admin@shop.com" } });
     expect(admin?.role).toBe("ADMIN");
     expect(admin?.passwordHash?.startsWith("$2")).toBe(true);
   });
 
   it("contient 6 catégories dont 3 avec parent", async () => {
-    expect(await prisma.category.count()).toBe(6);
-    expect(await prisma.category.count({ where: { parentId: { not: null } } })).toBe(3);
+    expect(await prisma!.category.count()).toBe(6);
+    expect(await prisma!.category.count({ where: { parentId: { not: null } } })).toBe(3);
   });
 
   it("inclut la catégorie verrerie Revizit", async () => {
-    const verrerie = await prisma.category.findUnique({ where: { slug: "verrerie" } });
+    const verrerie = await prisma!.category.findUnique({ where: { slug: "verrerie" } });
     expect(verrerie).not.toBeNull();
   });
 
   it("contient des produits de verrerie personnalisée", async () => {
-    const glass = await prisma.product.count({
+    const glass = await prisma!.product.count({
       where: { category: { slug: "verrerie" }, isActive: true },
     });
     expect(glass).toBeGreaterThanOrEqual(3);
@@ -41,9 +51,9 @@ describe("seed (intégration SQLite)", () => {
 
   it("contient 30 produits actifs (15 hommes / 15 femmes)", async () => {
     const [total, men, women] = await Promise.all([
-      prisma.product.count({ where: { isActive: true } }),
-      prisma.product.count({ where: { gender: "MEN" } }),
-      prisma.product.count({ where: { gender: "WOMEN" } }),
+      prisma!.product.count({ where: { isActive: true } }),
+      prisma!.product.count({ where: { gender: "MEN" } }),
+      prisma!.product.count({ where: { gender: "WOMEN" } }),
     ]);
     expect(total).toBe(30);
     expect(men).toBe(15);
@@ -51,7 +61,7 @@ describe("seed (intégration SQLite)", () => {
   });
 
   it("chaque produit a des variantes avec stock > 0 et prix en centimes", async () => {
-    const products = await prisma.product.findMany({
+    const products = await prisma!.product.findMany({
       select: { id: true, price: true, variants: { select: { stock: true } } },
     });
     expect(products.length).toBe(30);
@@ -63,7 +73,7 @@ describe("seed (intégration SQLite)", () => {
   });
 
   it("contient 5 commandes avec items et total cohérent", async () => {
-    const orders = await prisma.order.findMany({ include: { items: true } });
+    const orders = await prisma!.order.findMany({ include: { items: true } });
     expect(orders.length).toBe(5);
     for (const o of orders) {
       expect(o.items.length).toBeGreaterThan(0);
