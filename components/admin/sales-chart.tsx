@@ -24,6 +24,25 @@ const axisFormatter = new Intl.NumberFormat("fr-FR", {
 });
 
 export function SalesChart({ data }: { data: SalesPoint[] }) {
+  // Recharts ne rend rien tant que le conteneur n'a pas de dimension mesurée.
+  // Sans donnée, on affiche un état vide explicite : évite de faire tourner la
+  // lib de graphiques pour rien sur un back-office fraîchement créé.
+  const hasData = data.some((d) => d.sales > 0);
+  if (!hasData) {
+    return (
+      <div
+        className="flex h-72 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed text-center"
+        role="img"
+        aria-label="Aucune vente sur les 14 derniers jours"
+      >
+        <p className="text-sm font-medium text-foreground">Aucune vente sur 14 jours</p>
+        <p className="text-xs text-muted-foreground">
+          Le graphique s&apos;affichera dès la première commande.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-72 w-full" role="img" aria-label="Ventes des 14 derniers jours">
       <ResponsiveContainer width="100%" height="100%">
