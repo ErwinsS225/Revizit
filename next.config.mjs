@@ -4,6 +4,10 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "plus.unsplash.com" },
+      // Images téléversées par l'admin dans Supabase Storage.
+      // Le sous-domaine exact est <PROJECT_REF>.supabase.co : le motif
+      // "*.supabase.co" le couvre sans dépendre de la référence du projet.
+      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
     ],
   },
   experimental: {

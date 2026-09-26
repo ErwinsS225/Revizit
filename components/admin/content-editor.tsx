@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, RotateCcw, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ImageUploader } from "@/components/admin/image-uploader";
 
 // components/admin/content-editor.tsx — édition d'un bloc éditorial (admin).
 export interface BlockDraft {
@@ -122,7 +123,10 @@ export function ContentEditor({
       </div>
 
       <div className="mt-4 space-y-4">
-        {fields.map((field) => (
+        {/* `image` et `imageAlt` ont leur propre rendu ci-dessous. */}
+        {fields
+          .filter((field) => field !== "image")
+          .map((field) => (
           <div key={field}>
             <label htmlFor={`${draft.key}-${field}`} className="block text-sm font-medium">
               {FIELD_LABELS[field] ?? field}
@@ -145,21 +149,16 @@ export function ContentEditor({
               />
             )}
           </div>
-        ))}
+          ))}
 
+        {/* Upload + aperçu, à la place du simple champ texte. */}
         {fields.includes("image") ? (
-          <div className="overflow-hidden rounded-lg border bg-muted/40">
-            {draft.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={draft.image}
-                alt={draft.imageAlt || "Aperçu"}
-                className="h-40 w-full object-cover"
-              />
-            ) : (
-              <p className="p-4 text-center text-xs text-muted-foreground">Aucune image</p>
-            )}
-          </div>
+          <ImageUploader
+            value={draft.image}
+            alt={draft.imageAlt}
+            folder="contenu"
+            onChange={(url) => set("image", url)}
+          />
         ) : null}
 
         <label className="flex items-center gap-2 text-sm">
