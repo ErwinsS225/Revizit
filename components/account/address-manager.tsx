@@ -55,7 +55,11 @@ export function AddressManager({ initialAddresses }: { initialAddresses: Address
 
       toast.success("Adresse enregistrée avec succès");
       setShowAddForm(false);
-      setAddresses((prev) => [...prev, { id: data.address!.id, ...payload }]);
+      // `data.address` a déjà été vérifié par le garde `if (!data.address) throw`
+      // juste au-dessus : on extrait l'id dans une const pour que le
+      // type checker le sache, sans assertion non-null.
+      const createdId = data.address.id;
+      setAddresses((prev) => [...prev, { id: createdId, ...payload }]);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur inattendue");

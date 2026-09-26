@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { formatPrice } from "@/lib/utils";
-import { ROLES, type Role } from "@/types";
+import { type Role } from "@/types";
 import { AdminTable, type AdminColumn } from "@/components/admin/admin-table";
 import { UserRoleSelect } from "@/components/admin/user-role-select";
 

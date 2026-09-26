@@ -57,11 +57,16 @@ export async function getCurrentUser() {
   return session?.user ?? null;
 }
 
-/** Exige un rôle ADMIN, sinon lève une erreur. */
+/**
+ * Exige un rôle ADMIN, sinon lève une erreur.
+ * Le contrôle est déjà fait ci-dessus : le narrowing de TypeScript permet
+ * d'éviter les assertions non-null, qui masqueraient une régression future.
+ */
 export async function requireAdmin() {
   const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
+  const user = session?.user;
+  if (!user || user.role !== "ADMIN") {
     throw new Error("Accès réservé à l'administrateur");
   }
-  return session!.user!;
+  return user;
 }

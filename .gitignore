@@ -3,6 +3,8 @@ node_modules/
 # next
 .next/
 out/
+# tsbuildinfo (artefact de compilation incrémentale, régénéré à chaque build)
+*.tsbuildinfo
 # prisma
 prisma/dev.db*
 # env
