@@ -1,0 +1,16 @@
+# deps
+node_modules/
+# next
+.next/
+out/
+# prisma
+prisma/dev.db*
+# env
+.env*.local
+.env
+# uploads
+public/uploads/*
+!public/uploads/.gitkeep
+# logs / os
+*.log
+.DS_Store
