@@ -11,6 +11,7 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion/motion-tokens"
 import { buttonVariants } from "@/components/ui/button";
 import { BRAND, FREE_SHIPPING_THRESHOLD, SEO_DESCRIPTION } from "@/lib/brand";
 import { parseJsonStringArray } from "@/lib/cart-pricing";
+import { getContent } from "@/lib/content";
 import { prisma } from "@/lib/prisma";
 import { buildMetadata } from "@/lib/seo";
 import { formatPrice } from "@/lib/utils";
@@ -43,7 +44,7 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function HomePage() {
-  const [categories, featured] = await Promise.all([
+  const [categories, featured, content] = await Promise.all([
     prisma.category.findMany({
       where: { parentId: null },
       orderBy: { name: "asc" },
@@ -55,11 +56,32 @@ export default async function HomePage() {
       orderBy: { createdAt: "asc" },
       select: { id: true, name: true, slug: true, price: true, images: true, gender: true },
     }),
+    getContent(),
   ]);
+
+  // Les blocs publiés (isActive) sont pris en compte ; les autres gardent
+  // leurs valeurs par défaut. Le filtrage est fait ici pour que les
+  // composants restent simples.
+  const hero = (["hero-1", "hero-2", "hero-3"] as const)
+    .map((k) => content[k])
+    .filter((b) => b.image && b.title);
+  const univers = content.univers;
+  const verrerie = content.verrerie;
+  const selection = content.selection;
 
   return (
     <div>
-      <HeroCarousel />
+      <HeroCarousel
+        slides={hero.map((b) => ({
+          eyebrow: b.eyebrow ?? "",
+          title: b.title,
+          subtitle: b.subtitle ?? "",
+          ctaLabel: b.ctaLabel ?? "Découvrir",
+          ctaHref: b.ctaHref ?? "/products",
+          image: b.image ?? "",
+          imageAlt: b.imageAlt ?? b.title,
+        }))}
+      />
       <FlashCountdown />
 
       {/* Catégories */}
@@ -67,13 +89,18 @@ export default async function HomePage() {
         <Reveal>
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">Nos univers</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">
+                {univers.eyebrow}
+              </p>
               <h2 id="categories-titre" className="mt-2 font-serif text-3xl">
-                Mode &amp; verrerie Revizit
+                {univers.title}
               </h2>
             </div>
-            <Link href="/products" className={cn(buttonVariants({ variant: "gold-outline" }), "hidden sm:inline-flex")}>
-              Tout voir <ArrowRight className="h-4 w-4" />
+            <Link
+              href={univers.ctaHref ?? "/products"}
+              className={cn(buttonVariants({ variant: "gold-outline" }), "hidden sm:inline-flex")}
+            >
+              {univers.ctaLabel ?? "Tout voir"} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </Reveal>
@@ -106,7 +133,7 @@ export default async function HomePage() {
       </section>
 
       {/* Section signature : atelier verrerie personnalisée */}
-      <GlasswareSection />
+      <GlasswareSection content={verrerie} />
 
       {/* Produits vedettes */}
       <section aria-labelledby="vedettes-titre" className="bg-muted/40 py-14">
@@ -114,10 +141,10 @@ export default async function HomePage() {
           <Reveal>
             <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-gold">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Sélection du moment
+              {selection.eyebrow}
             </p>
             <h2 id="vedettes-titre" className="mt-2 font-serif text-3xl">
-              Pièces Revizit
+              {selection.title}
             </h2>
           </Reveal>
           <Stagger className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">

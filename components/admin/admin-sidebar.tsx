@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FolderTree, LayoutDashboard, Package, Receipt, Store, Users } from "lucide-react";
+import {
+  FileText,
+  FolderTree,
+  LayoutDashboard,
+  Package,
+  Receipt,
+  Store,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // components/admin/admin-sidebar.tsx — navigation de l'espace admin.
@@ -13,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/admin/categories", label: "Catégories", icon: FolderTree },
   { href: "/admin/orders", label: "Commandes", icon: Receipt },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
+  { href: "/admin/contenu", label: "Contenu du site", icon: FileText },
 ] as const;
 
 export function AdminSidebar() {

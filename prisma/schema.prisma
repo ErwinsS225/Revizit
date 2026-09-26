@@ -223,3 +223,37 @@ model Wishlist {
   @@unique([userId, productId])
 }
 
+/// Bloc de contenu éditorial de la page d'accueil, administrable depuis
+/// /admin/contenu. La clé identifie la section (« hero », « univers »,
+/// « verrerie », « selection »…) : le code de la home la lit par cette clé.
+///
+/// `image` et `imageAlt` : URL complète (Unsplash ou CDN). Champ unique non
+/// requis : toutes les sections n'ont pas d'image de bannière.
+model ContentBlock {
+  id        String   @id @default(cuid())
+  /// Identifiant stable de la section. Ne pas le changer : le code l'utilise.
+  key       String   @unique
+  /// Titre principal (H2 de la section, ou titre d'une slide).
+  title     String
+  /// Sur-titre affiché au-dessus (souvent en petites capitales dorées).
+  eyebrow   String?
+  /// Texte d'introduction / sous-titre.
+  subtitle  String?
+  /// Libellé du bouton d'appel à l'action.
+  ctaLabel  String?
+  /// Cible du bouton (chemin interne, ex. "/products?category=verrerie").
+  ctaHref   String?
+  /// URL de l'image de la section.
+  image     String?
+  /// Texte alternatif — indispensable pour l'accessibilité et le SEO.
+  imageAlt  String?
+  /// Rang d'affichage (les blocs homonymes sont triés dessus).
+  position  Int      @default(0)
+  /// Le bloc est-il publié ? Un bloc masqué retombe sur ses valeurs par défaut.
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, position])
+}
+

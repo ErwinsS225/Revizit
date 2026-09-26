@@ -7,15 +7,20 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { DURATION, EASE } from "@/components/motion/motion-tokens";
-import { HERO_AUTOPLAY_MS, HERO_SLIDES } from "@/lib/hero-slides";
+import { HERO_AUTOPLAY_MS, HERO_SLIDES, type HeroSlide } from "@/lib/hero-slides";
 import { cn } from "@/lib/utils";
 
 // components/home/hero-carousel.tsx — Hero carousel (fond + texte animés framer-motion).
-export function HeroCarousel() {
+//
+// `slides` permet à la page d'accueil d'injecter les textes administrables
+// (/admin/contenu). Sans prop, on retombe sur HERO_SLIDES : le composant reste
+// utilisable seul, en test ou ailleurs.
+export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [direction, setDirection] = useState(1);
-  const total = HERO_SLIDES.length;
+  const list = slides && slides.length > 0 ? slides : HERO_SLIDES;
+  const total = list.length;
 
   const goTo = useCallback(
     (i: number) => {
@@ -36,7 +41,7 @@ export function HeroCarousel() {
     return () => clearInterval(id);
   }, [paused, total]);
 
-  const slide = HERO_SLIDES[index];
+  const slide = list[index];
   if (!slide) return null;
 
   return (

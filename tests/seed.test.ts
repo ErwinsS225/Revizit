@@ -28,11 +28,21 @@ describeDb("seed (intégration Postgres)", () => {
     expect(prisma, "TEST_DATABASE_URL ou DATABASE_URL requis").not.toBeNull();
   }, TIMEOUT_MS);
 
-  it("ne crée AUCUN utilisateur de démonstration", async () => {
-    // Les comptes de test (admin@shop.com / Admin123!) ont été supprimés :
-    // ils donnaient un accès total au back-office. Les utilisateurs réels
-    // s'inscrivent via /register.
-    expect(await prisma!.user.count()).toBe(0);
+  it("ne crée AUCUN compte de démonstration", async () => {
+    // Les comptes de test (admin@shop.com / Admin123!) ont été supprimés : ils
+    // donnaient un accès total au back-office avec un mot de passe deviné en
+    // une seconde. Seuls les comptes réels ou de projection doivent exister —
+    // pas d'autre compte « prêt à l'emploi ».
+    const users = await prisma!.user.findMany({ select: { email: true, passwordHash: true } });
+    for (const u of users) {
+      // Tout mot de passe stocké doit être un hash bcrypt, jamais en clair.
+      if (u.passwordHash) {
+        expect(u.passwordHash.startsWith("$2"), `hash bcrypt attendu pour ${u.email}`).toBe(true);
+      }
+    }
+    // Aucun des anciens comptes de démonstration ne doit subsister.
+    const demoLike = users.filter((u) => /^(admin@shop\.com|marie@|karim@)/.test(u.email));
+    expect(demoLike).toEqual([]);
   }, TIMEOUT_MS);
 
   it("aucun email de démonstration résiduel en base", async () => {

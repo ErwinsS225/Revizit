@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Gift, Sparkles, Wine } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { FREE_ENGRAVING_FROM, GLASS_PRICING } from "@/lib/brand";
+import { DEFAULT_CONTENT, type ContentBlockData as GlassContent } from "@/lib/content";
+import { GLASS_PRICING } from "@/lib/brand";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -13,33 +14,41 @@ const STEPS = [
 ];
 
 // components/home/glassware-section.tsx — section signature « Atelier verrerie » (revizit.md §8).
-export function GlasswareSection() {
+//
+// `content` vient de /admin/contenu ; sans prop, on retombe sur les valeurs
+// par défaut du code, ce qui garde le composant utilisable seul.
+export function GlasswareSection({ content }: { content?: GlassContent }) {
+  const c = content ?? DEFAULT_CONTENT.verrerie;
+  const image = c.image ?? DEFAULT_CONTENT.verrerie.image;
+  const imageAlt = c.imageAlt ?? DEFAULT_CONTENT.verrerie.imageAlt;
+  const ctaHref = c.ctaHref ?? "/products?category=verrerie";
+  const ctaLabel = c.ctaLabel ?? "Créer ma coupe personnalisée";
   return (
     <section aria-labelledby="verrerie-titre" className="bg-ink py-16 text-ivory">
       <div className="container-shop grid items-center gap-10 lg:grid-cols-2">
-        <div className="relative overflow-hidden rounded-2xl">
-          <Image
-            src="https://images.unsplash.com/photo-1446822775955-c34f483b410b?auto=format&fit=crop&w=1200&q=80"
-            alt="Flûtes à champagne en cristal prêtes à être gravées"
-            width={1200}
-            height={900}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" aria-hidden="true" />
-        </div>
+        {image ? (
+          <div className="relative overflow-hidden rounded-2xl">
+            <Image
+              src={image}
+              alt={imageAlt ?? ""}
+              width={1200}
+              height={900}
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" aria-hidden="true" />
+          </div>
+        ) : null}
 
         <div>
           <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-gold">
             <Wine className="h-4 w-4" aria-hidden="true" />
-            Atelier verrerie
+            {c.eyebrow}
           </p>
           <h2 id="verrerie-titre" className="mt-2 font-serif text-3xl sm:text-4xl">
-            Crée ta coupe. Ta signature. Ton souvenir.
+            {c.title}
           </h2>
-          <p className="mt-3 text-sm text-ivory/75 sm:text-base">
-            Choisis ta coupe, grave ton prénom, tes initiales ou ta date. Idéal mariages, dots,
-            baptêmes et cadeaux d&apos;entreprise. Gravure offerte dès {FREE_ENGRAVING_FROM} coupes
-            achetées.
+          <p className="mt-3 whitespace-pre-line text-sm text-ivory/75 sm:text-base">
+            {c.subtitle}
           </p>
 
           <ol className="mt-6 space-y-4">
@@ -79,9 +88,9 @@ export function GlasswareSection() {
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Link href="/products?category=verrerie" className={cn(buttonVariants({ variant: "gold", size: "lg" }))}>
+            <Link href={ctaHref} className={cn(buttonVariants({ variant: "gold", size: "lg" }))}>
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Créer ma coupe personnalisée
+              {ctaLabel}
             </Link>
             <span className="flex items-center gap-1.5 text-xs text-ivory/60">
               <Gift className="h-4 w-4" aria-hidden="true" />
