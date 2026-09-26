@@ -34,6 +34,18 @@ Voir `.env.example`. Les deux essential pour faire tourner l'app :
 
 ⚠️ Ces URLs contiennent le mot de passe de la base. **Ne jamais les committer.**
 
+### `connection_limit` : local ou Vercel, pas les deux
+
+La page d'accueil exécute 4 requêtes Prisma en parallèle (`Promise.all`). Avec
+`connection_limit=1`, elles se mettent en file d'attente et la page échoue sur
+`Timed out fetching a new connection`.
+
+- **En local** : omettre `connection_limit` (pool Prisma par défaut)
+- **Sur Vercel** : ajouter `connection_limit=1` — chaque invocation a son propre
+  runtime, le pooler Supabase protège alors le quota de connexions
+
+Le gabarit `.env.example` suit cette règle.
+
 ## Commandes
 
 | Commande | Effet |
