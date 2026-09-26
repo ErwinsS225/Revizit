@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageGallery } from "@/components/admin/image-gallery";
 
 // components/admin/product-form.tsx — formulaire produit (création + édition).
 // Le schéma client est DÉRIVÉ du schéma serveur (productSchema) afin de garder
@@ -150,6 +151,13 @@ export function ProductForm({ categories, product }: ProductFormProps) {
 
   const { fields, append, remove } = useFieldArray({ control, name: "variants" });
   const nameValue = watch("name");
+  // Source de vérité de la galerie : le même texte que la validation zod,
+  // découpé en liste. La galerie écrit dans `imagesText` via setValue.
+  const imagesText = watch("imagesText");
+  const imagesList = imagesText
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   async function onSubmit(values: FormValues) {
     const endpoint = isEdit && product ? `/api/products/${product.id}` : "/api/products";
@@ -336,22 +344,27 @@ export function ProductForm({ categories, product }: ProductFormProps) {
         </div>
       </section>
 
-      {/* Images */}
+      {/* Images : galerie (upload + réordonnancement), la 1re sert de vignette. */}
       <section className="space-y-3 rounded-xl border bg-card p-5 shadow-sm sm:p-6">
         <h2 className="font-serif text-lg font-semibold">Images</h2>
-        <div>
-          <Label htmlFor="product-images">URLs (une par ligne, HTTPS)</Label>
-          <Textarea
-            id="product-images"
-            rows={4}
-            {...register("imagesText")}
-            placeholder={"https://images.unsplash.com/photo-…\nhttps://images.unsplash.com/photo-…"}
-          />
-          <p className="mt-1 text-xs text-muted-foreground">
-            La première image est utilisée comme vignette dans les listes.
-          </p>
-          <FieldError message={errors.imagesText?.message} />
-        </div>
+        <ImageGallery
+          value={imagesList}
+          onChange={(next) =>
+            setValue("imagesText", next.join("\n"), {
+              shouldValidate: true,
+              shouldDirty: true,
+            })
+          }
+          max={8}
+          folder="produits"
+        />
+        {/*
+          Champ caché mirroring la galerie : c'est lui que zod valide et que
+          l'API reçoit (« une URL par ligne »). La galerie écrit dedans via
+          setValue, ce qui garantit que les deux restent synchronisés.
+        */}
+        <input type="hidden" {...register("imagesText")} />
+        <FieldError message={errors.imagesText?.message} />
       </section>
 
       {/* Variantes */}
