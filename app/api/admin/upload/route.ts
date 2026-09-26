@@ -52,8 +52,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, url: result.url });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Envoi impossible";
+    // `req.formData()` lève si l'appelant n'envoie pas un multipart/form-data
+    // (erreur fréquente côté client) : on renvoie un 400 explicite, pas un 500.
+    const badRequest =
+      message.includes("formData") ||
+      message.includes("multipart") ||
+      message.includes("boundary");
     console.error("[admin/upload]", message);
-    return NextResponse.json({ ok: false, error: "Envoi impossible" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: "Envoi invalide : le fichier doit être envoyé en multipart/form-data" },
+      { status: badRequest ? 400 : 500 },
+    );
   }
 }
 
