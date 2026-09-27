@@ -66,13 +66,29 @@ Le gabarit `.env.example` suit cette règle.
 À saisir dans l'interface Vercel (*Project → Settings → Environment Variables*).
 Vercel ne lit pas votre `.env.local` : rien n'est copié automatiquement.
 
+#### 1.1 L'URL de l'application
+
+`AUTH_URL` et `NEXT_PUBLIC_APP_URL` doivent contenir l'adresse **réelle** du
+site, sans barre oblique finale.
+
+- Sans domaine : `https://revizit.vercel.app`
+  (Vercel l'attribue au déploiement ;Projects → Settings → Domains)
+- Avec un domaine acheté plus tard : `https://revizit.ci`
+
+Les deux valeurs sont identiques et servent à construire les liens envoyés par
+email (réinitialisation de mot de passe) et à faire pointer Auth.js.
+
+Quand vous ajoutez un domaine sur Vercel (*Settings → Domains → Add*),
+pensez à mettre à jour ces deux variables, sinon les emails continueront
+d'envoyer des liens vers l'ancienne adresse.
+
 | Variable | Rôle |
 | --- | --- |
 | `DATABASE_URL` | Pooler Supabase. **Ajouter `&connection_limit=1`** (voir ci-dessous) |
 | `DIRECT_URL` | Connexion directe (port 5432), pour les migrations |
 | `AUTH_SECRET` | 32 caractères aléatoires. `openssl rand -base64 32` |
-| `AUTH_URL` | `https://votre-domaine` |
-| `NEXT_PUBLIC_APP_URL` | `https://votre-domaine` |
+| `AUTH_URL` | `https://votre-domaine` (voir §1.1) |
+| `NEXT_PUBLIC_APP_URL` | `https://votre-domaine` (voir §1.1) |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref>.supabase.co` |
 | `SUPABASE_SECRET_KEY` | Clé secrète régénérée (jamais exposée au client) |
 | `SEED_DEMO_USERS` | `false` |
